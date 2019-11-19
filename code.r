@@ -77,12 +77,18 @@ anova(b_min4, b_min3, test = "Chisq" )
 
 b_min51 <-  glm(Gold~age*carduse+mcashwd+sex, family = binomial, data = gold)
 anova(b_min51, b_min4, test = "Chisq" )
-# significance jumps to 0.074 Bigger model has lower deviance
+# significance jumps to 0.074 Bigger model has lower deviance.
 b_min52 <-  glm(Gold~age*carduse+mcardwdl+sex, family = binomial, data = gold)
 anova(b_min52, b_min4, test = "Chisq" )
 #0.068
-
-
+b_min53 <-  glm(Gold~age+carduse+mcardwdl+mcashwd+sex, family = binomial, data = gold)
+anova(b_min53, b_min4, test = "Chisq" )
+#0.028
+b_min54 <-  glm(Gold~age*carduse+mcardwdl+mcashwd, family = binomial, data = gold)
+anova(b_min53, b_min4, test = "Chisq" )
+#0.028
+# stop with the model b_min4!
+summary(b_min4)
 
 ##### 2C
 step(a, direction = "both", test = "Chisq")
