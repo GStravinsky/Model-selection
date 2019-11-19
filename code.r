@@ -55,8 +55,37 @@ a <- glm(Gold~age*carduse+., family = binomial, data = gold)
 summary(a)
 # age, carduseno, credit withdrawals, sex, interaction
 
-#### 2C
-step(a, direction = "backward", test = "F")
+b_min1 <- glm(Gold~age*carduse+mcardwdl+mcashcr+mcashwd+second+sex+type, family = binomial, data = gold)
+summary(b_min1)
+b_min2 <-  glm(Gold~age*carduse+mcardwdl+mcashwd+second+sex+type, family = binomial, data = gold)
+summary(b_min2)
+b_min3 <-  glm(Gold~age*carduse+mcashwd+mcardwdl+sex+type, family = binomial, data = gold)
+summary(b_min3)
+b_min4 <-  glm(Gold~age*carduse+mcashwd+mcardwdl+sex, family = binomial, data = gold)
+summary(b_min4)
+anova(b_min1, a, test = "Chisq")
+anova(b_min2, a, test = "Chisq")
+anova(b_min3, a, test = "Chisq")
+anova(b_min4, a, test = "Chisq" )
+
+# I think it is good when insignificant. Meaning that bigger model does not give extra meaning.
+# So go for parsimonious. 
+
+anova(b_min2, b_min1, test = "Chisq")
+anova(b_min3, b_min2, test = "Chisq")
+anova(b_min4, b_min3, test = "Chisq" )
+
+b_min51 <-  glm(Gold~age*carduse+mcashwd+sex, family = binomial, data = gold)
+anova(b_min51, b_min4, test = "Chisq" )
+# significance jumps to 0.074 Bigger model has lower deviance
+b_min52 <-  glm(Gold~age*carduse+mcardwdl+sex, family = binomial, data = gold)
+anova(b_min52, b_min4, test = "Chisq" )
+#0.068
+
+
+
+##### 2C
+step(a, direction = "both", test = "Chisq")
 # - frequency, -mcashcr. - second. - type
 # leave mcardwdl, mcashwd, interaction, sex, age, carduse. AIC = 891
 # a bit different from a suggestion of simple individual significance
