@@ -1,6 +1,8 @@
 load("//pedley.ads.warwick.ac.uk/user62/u/u1620789/Documents/ST952/Ass_2_R/czechgold.Rdata")
 load("/Users/MacBook_Retina_2015_256Gb/Documents/Statistics Warwick/ST952/Assignment_2/czechgold.Rdata")
 
+load("/Users/MacBook_Retina_2015_256Gb/Documents/Statistics Warwick/ST952/Assignment_2/czechgold.Rdata")
+
 
 if(!require(glmnet)){
   install.packages("glmnet")
@@ -127,18 +129,19 @@ y <- ifelse(y==1,1,0)
 
 xy <- as.matrix(gold[,c(2:10)])
 
-
 # Fit lasso regression
-fit1 <- glmnet(x,y,alpha=1)
+fit1 <- glmnet(x,y, family="binomial", alpha=1)
 par(mfrow=c(1,1))
 #Crude plot trace
 plot(fit1)
 # plot of log(lambda) and label traces
 plot(fit1,"lambda",label = T)
 # Print out solution for lambda=1 (log(lambda) = 0)
-coef(fit1,s=1)
+coef(fit1,s=0)
+
+# I THINK THIS IS WEIRD BECAUSE OF ZEROS. 
 # Cross validation
-cvfit1 = cv.glmnet(x,y,alpha=1)
+cvfit1 = cv.glmnet(x,y, family="binomial",alpha=-6)
 # Plot this
 plot(cvfit1)
 #  find optimum
@@ -156,4 +159,3 @@ legend("top",legend=c("Minimum lambda", "1 standard error larger lambda"),lty=c(
 legend("topright",legend=c("Minimum lambda", "1 standard error larger lambda"),lty=c(1,1),col=c("blue","red"), ins=0.05)
 coef(cvfit1, s = "lambda.min")
 coef(cvfit1, s = "lambda.1se")
-
