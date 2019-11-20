@@ -1,4 +1,11 @@
 load("//pedley.ads.warwick.ac.uk/user62/u/u1620789/Documents/ST952/Ass_2_R/czechgold.Rdata")
+load("/Users/MacBook_Retina_2015_256Gb/Documents/Statistics Warwick/ST952/Assignment_2/czechgold.Rdata")
+
+
+if(!require(glmnet)){
+  install.packages("glmnet")
+  library(glmnet)
+}
 
 summary(czechgold)
 # gold to factor
@@ -97,3 +104,56 @@ step(a, direction = "both", test = "Chisq")
 # a bit different from a suggestion of simple individual significance
 a1 <- glm(Gold~age*carduse+ mcardwdl + mcashwd + sex, family = binomial, data = gold)
 summary(a1)
+
+####### 2D
+
+#Put  all x-variables into a matrix - use dummy variables rather than factor
+x <- gold[,c(2:10)]
+x$second <- ifelse(x$second=="Y", 1,0)
+x$sex <- ifelse(x$sex=="F", 1,0)
+x$carduse <- ifelse(x$carduse=="Yes", 1,0)
+x$type <- ifelse(x$type=="OWNER", 1,0)
+
+install.packages("caret")
+library(caret)
+frq <- dummyVars(~ frequency, data = x, levelsOnly = TRUE)
+frq_full <- predict(frq, x)
+x <- merge(x = x, y = frq_full, by.x = 0, by.y = 0)
+x <- x[,c(2:7, 9:13)]
+x <- as.matrix(x)
+
+y <- gold[,1]
+y <- ifelse(y==1,1,0)
+
+xy <- as.matrix(gold[,c(2:10)])
+
+
+# Fit lasso regression
+fit1 <- glmnet(x,y,alpha=1)
+par(mfrow=c(1,1))
+#Crude plot trace
+plot(fit1)
+# plot of log(lambda) and label traces
+plot(fit1,"lambda",label = T)
+# Print out solution for lambda=1 (log(lambda) = 0)
+coef(fit1,s=1)
+# Cross validation
+cvfit1 = cv.glmnet(x,y,alpha=1)
+# Plot this
+plot(cvfit1)
+#  find optimum
+cvfit1$lambda.min
+# find optimum that is one standard error from optimum 
+cvfit1$lambda.1se
+# Add lines to mark these two possibilities
+abline(v=log(cvfit1$lambda.1se),col="red")
+abline(v=log(cvfit1$lambda.min),col="blue")
+#scroll back through plots and re-rum above two lines to add these to trace plot against log(lambda)
+
+# Add legend - first put mse plot in window
+legend("top",legend=c("Minimum lambda", "1 standard error larger lambda"),lty=c(1,1),col=c("blue","red"), ins=0.05)
+# then trace plot against log(lambda)
+legend("topright",legend=c("Minimum lambda", "1 standard error larger lambda"),lty=c(1,1),col=c("blue","red"), ins=0.05)
+coef(cvfit1, s = "lambda.min")
+coef(cvfit1, s = "lambda.1se")
+
