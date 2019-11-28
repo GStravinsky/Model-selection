@@ -1,12 +1,12 @@
 load("/Users/MacBook_Retina_2015_256Gb/Documents/Statistics Warwick/ST952/Assignment_2/czechgold.Rdata")
 
 
-if(require(glmnet)){
+if(!require(glmnet)){
   install.packages("glmnet")
   library(glmnet)
 }
 
-if(require(PRROC)){
+if(!require(PRROC)){
   install.packages("PRROC")
   library(PRROC)
 }
@@ -15,9 +15,13 @@ if(require(PRROC)){
 install.packages("caret")
 library(caret)
 
+library(ggplot2)
+setwd("~/Documents/Statistics Warwick/ST952/Assignment_2")
+
 summary(czechgold)
 # gold to factor
 # string to dummies
+
 
 gold <- czechgold
 gold$Gold <- factor(gold$Gold)
@@ -30,8 +34,9 @@ gold$carduse <- as.factor(gold$carduse)
 summary(gold)
 str(gold)
 
+
+
 attach(gold)
-pairs(age~., data=gold[,c(2:5)])
 # curious about the zero values.....  they mean something
 # but only  cash withrawals and cash credits seem correlated and to some 
 # extent cash widtdrawals and credit withdrawals. 
@@ -39,7 +44,7 @@ par(mfrow=c(2,2))
 hist(age,40)
 hist(mcardwdl[mcardwdl!=0], 40)
 hist(mcashcr[mcashcr!=0], 40)
-hist(mcashwd[mcashcr!=0], 40)
+hist(mcashwd, 40)
 
 # WITHOUT ZEROS
 hist(age)
@@ -56,9 +61,38 @@ barplot(prop.table(table(frequency)))
 barplot(prop.table(table(carduse)))
 barplot(prop.table(table(type)))
 
+par(mfrow=c(1,1))
 length(mcardwdl[mcardwdl==0])
 length(carduse[carduse=="No"])
 # perfect explanation
+
+### LOG ODDS ####
+
+myemplogit <- function(yvar=y,xvar=x,maxbins=10,sc=1,...){
+  breaks  <<- unique(quantile(xvar, probs=0:maxbins/maxbins))
+  levs  <<- (cut(xvar, breaks, include.lowest=FALSE))
+  num <<- as.numeric(levs)
+  c.tab <- count(num,'levs')
+  c.tab$levs <- factor(c.tab$levs, levels = levels(addNA(c.tab$levs)), labels = c(levels(c.tab$levs),
+                                                                                  paste("[",min(xvar),"]",sep="")), exclude = NULL)
+  c.tab <- c.tab[c(nrow(c.tab),1:nrow(c.tab)-1),]
+  sc <- (max(c.tab$freq)/min(c.tab$freq)/sc)^2
+  zcex <<- c.tab$freq/sc
+  print(c.tab);print(zcex);print(sc)
+  emplogitplot1(yvar~xvar,breaks=breaks,cex=zcex,...)
+}
+
+
+png("log.odds.png", units = "cm", width = 10, height = 8)
+par(mfrow=c(2,2))
+myemplogit(Gold,mcardwdl,30,sc=3,xlab="Amount of credit card withdrawals")
+myemplogit(Gold,age,20,sc=15,xlab="Age")
+myemplogit(Gold,mcashwd,20,sc=10,xlab="Amount of cash withdrawls")
+myemplogit(Gold,mcashcr,50,sc=2,xlab="Amount of cash credit")
+dev.off()
+
+par(mfrow=c(1,1))
+
 
 
 ############# Part 2 ##########
@@ -66,7 +100,7 @@ length(carduse[carduse=="No"])
 options(scipen = 999)
 options(digits=4)
 
-a <- glm(Gold~age*carduse+., family = binomial, data = gold)
+a <- glm(Gold~age:carduse+., family = binomial, data = gold)
 y.pred_A <- predict(a,type="response")
 summary(a)
 
