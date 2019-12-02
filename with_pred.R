@@ -11,6 +11,17 @@ if(!require(PRROC)){
   library(PRROC)
 }
 
+if(!require(xtable)){
+  install.packages("xtable")
+  library(xtable)
+}
+
+if(!require(stargazer)){
+  install.packages("stargazer")
+  library(stargazer)
+}
+
+library(plyr)
 
 install.packages("caret")
 library(caret)
@@ -86,7 +97,7 @@ myemplogit <- function(yvar=y,xvar=x,maxbins=10,sc=1,...){
 png("log.odds.png", units = "cm", width = 10, height = 8)
 par(mfrow=c(2,2))
 myemplogit(Gold,mcardwdl,30,sc=3,xlab="Amount of credit card withdrawals")
-myemplogit(Gold,age,20,sc=15,xlab="Age")
+myemplogit(Gold,age,40,sc=15,xlab="Age")
 myemplogit(Gold,mcashwd,20,sc=10,xlab="Amount of cash withdrawls")
 myemplogit(Gold,mcashcr,50,sc=2,xlab="Amount of cash credit")
 dev.off()
@@ -102,7 +113,8 @@ options(digits=4)
 
 a <- glm(Gold~age:carduse+., family = binomial, data = gold)
 y.pred_A <- predict(a,type="response")
-summary(a)
+table <- summary(a)
+
 
 roc_A <- roc.curve(scores.class0 = y.pred_A, weights.class0 = y, curve=T)
 plot(roc_A)
@@ -150,18 +162,29 @@ plot(roc_B)
 
 ##### 2C
 different <- glm(Gold~age:carduse+., family = binomial, data = gold)
-step(different, direction = "backward", test = "Chisq")
+stepwise <- step(different, direction = "both", test = "Chisq")
 # - frequency, -mcashcr. - second. - type
 # leave mcardwdl, mcashwd, interaction, sex, age, carduse. AIC = 891
 # a bit different from a suggestion of simple individual significance
 a1 <- glm(Gold~age*carduse+ mcardwdl + mcashwd + sex, family = binomial, data = gold)
 summary(a1)
 
-stepwise <- step(different, direction = "backward", test = "Chisq")
+stepwise <- step(different, direction = "both", test = "Chisq")
 y.pred_C <- predict(stepwise,type="response")
 
 roc_C <- roc.curve(scores.class0 = y.pred_C, weights.class0 = y, curve=T)
 plot(roc_C)
+
+gold2 <- gold[,c(1:7, 9:10)]
+#gold2$Af_tr <- ifelse(gold$frequency=="After_Tr", 1,0)
+gold2$Weekly <- ifelse(gold$frequency=="Weekly", 1,0)
+gold2$Monthly <- ifelse(gold$frequency=="Monthly", 1,0)
+gold2$interaction <- ifelse(gold2$carduse=="Yes", gold2$age, 0)
+
+updates_dof <- glm(Gold~., family = binomial, data = gold2)
+summary(updates_dof)
+
+stepwise <- step(updates_dof, direction = "backward", test = "Chisq")
 
 ####### 2D
 
